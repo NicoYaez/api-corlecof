@@ -190,11 +190,29 @@ const addParticipants = async (req, res) => {
     }
 };
 
+// Función para eliminar un taller por su ID
+const deleteTaller = async (req, res) => {
+    try {
+        const { id } = req.params; // Obtener el ID del taller desde los parámetros de la ruta
+        const taller = await Taller.findById(id); // Buscar el taller por ID
+
+        if (!taller) {
+            return res.status(404).json({ message: "Taller no encontrado" });
+        }
+
+        await taller.remove(); // Eliminar el taller encontrado
+        res.status(200).json({ message: "Taller eliminado con éxito" });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     createTaller,
     listTalleres,
     updateTaller,
     getTallerById,
     assignProfesionalByRut,
-    addParticipants
+    addParticipants,
+    deleteTaller
 };

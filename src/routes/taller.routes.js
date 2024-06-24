@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createTaller, listTalleres, updateTaller, getTallerById, assignProfesionalByRut, addParticipants } = require('../controllers/taller.controller');
+const { createTaller, listTalleres, updateTaller, getTallerById, assignProfesionalByRut, addParticipants, deleteTaller } = require('../controllers/taller.controller');
 
 // Ruta para crear un nuevo taller
 router.post('/register', createTaller);
@@ -10,6 +10,8 @@ router.get('/list', listTalleres);
 router.put('/:id', updateTaller);
 
 router.get('/:id', getTallerById);
+// Ruta para eliminar un taller
+router.delete('/:id', deleteTaller);
 
 router.put('/:id/assign-profesional', assignProfesionalByRut);
 
