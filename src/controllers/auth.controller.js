@@ -1,5 +1,5 @@
 const User = require("../models/user");
-const { Role } = require("../models/role");
+//const { Role } = require("../models/role");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -7,8 +7,8 @@ const cookieParser = require("cookie-parser");
 const { generateToken } = require("../utils/tokenManager");
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const { sendPasswordResetEmail, sendRegister, sendEmailUpdate } = require('../services/emailService');
 
+const { Profesional, Secretary, Admin } = require('../models');
 
 function generatePassword() {
   const length = 16,
@@ -21,17 +21,14 @@ function generatePassword() {
 }
 
 const register = async (req, res) => {
-  const { serial, roles } = req.body; // Recibo los datos
-  let { username } = req.body; // Recibo los datos
+  const { role, speciality } = req.body; // Recibo los datos
+  let { rut } = req.body; // Recibo los datos
+  const { name } = req.body; // Recibo los datos
   const email = req.body.email.toLowerCase();
   const password = generatePassword();
 
-  if (!serial) {
-    return res.status(400).json({ message: "Debe proporcionar un número de serie" });
-  }
-
-  if (!username) {
-    username = email.split('@')[0];
+  if (!rut) {
+    return res.status(400).json({ message: "Debe proporcionar un RUT" });
   }
 
   // Verificar si ya existe un usuario con el mismo nombre de usuario
@@ -39,43 +36,60 @@ const register = async (req, res) => {
   if (existingUser) {
     return res.status(400).json({ message: "El correo ya está en uso" });
   }
-
-  const newUser = new User({
-    username: username,
-    email: email,
-    password: password,
-    serial: Array.isArray(serial) ? serial : [serial],  // Asegurándonos de que "serial" es un array
-  });
-
-  newUser.password = await newUser.encryptPassword(password); //Cifrar contraseña
-
-  // si se le da un rol lo que hace es buscar ese rol y darle la id al nuevo usuario como array
-  // en caso de no tener un rol se le dara el rol por defecto llamado user
-  if (roles) {
-    const foundRoles = await Role.find({ name: { $in: roles } });
-    newUser.roles = foundRoles.map((role) => role._id);
+  let newUser;
+  if (role === 'Profesional') {
+    newUser = new Profesional({
+      rut: rut,
+      name: name,
+      email: email,
+      password: password,
+      role: 'Profesional',
+      speciality: speciality
+    });
+  } else if (role === 'Secretary') {
+    newUser = new Secretary({
+      rut: rut,
+      name: name,
+      email: email,
+      password: password,
+      role: 'Secretary'
+    });
+  } else if (role === 'Admin') {
+    newUser = new Admin({
+      rut: rut,
+      name: name,
+      email: email,
+      password: password,
+      role: 'Admin'
+    });
   } else {
-    const role = await Role.findOne({ name: "user" });
-    newUser.roles = [role._id];
+    return res.status(400).json({ message: "Rol inválido" });
   }
 
+  newUser.password = await newUser.encryptPassword(password); //Cifrar contraseña
   const userSave = await newUser.save(); //Usuario Guardado
-  await sendRegister(username, email, password); // Enviar correo electrónico
+  //await sendRegister(rut, email, password); // Enviar correo electrónico
 
-  const { token, expiresIn } = generateToken({ id: userSave._id, serial: userSave.serial }, res);
+  const { token, expiresIn } = generateToken({ id: userSave._id, role: userSave.role, rut: userSave.rut }, res);
 
-  return res.status(200).json({ token, expiresIn });
+  return res.status(200).json({
+    token,
+    expiresIn,
+    rut: userSave.rut,
+    name: userSave.name,
+    email: userSave.email,
+    password // Devuelve la contraseña generada
+  });
 };
 
 const login = async (req, res, next) => {
   try {
-    const email = req.body.email.toLowerCase();
+    const rut = req.body.rut; // Recibo el RUT
+    const password = req.body.password; // Recibo la contraseña
 
-    console.log(email)
+    console.log(rut)
 
-    const userFound = await User.findOne({
-      email: email,
-    }).populate("roles");
+    const userFound = await User.findOne({rut: rut});
     if (!userFound)
       return res.status(404).json({ message: "Usuario no encontrado" });
 
@@ -91,28 +105,11 @@ const login = async (req, res, next) => {
         .json({ token: null, message: "Contraseña incorrecta" });
     const expiresIn = 60 * 60 * 24;
 
-    try {
-      const roles = await Role.find({ _id: { $in: userFound.roles } }); // Buscar los roles dentro de user
-      for (let i = 0; i < roles.length; i++) {
-        if (roles[i].name === "admin") {
-          const token = jwt.sign({ id: userFound._id, role: userFound.roles[i].name, serial: userFound.serial }, process.env.SECRET_API, {
-            expiresIn,
-          });
-          return res.status(200).json({ token });
-        }
-        if (roles[i].name === "user") {
-          const token = jwt.sign({ id: userFound._id, role: userFound.roles[i].name, serial: userFound.serial }, process.env.SECRET_API, {
-            expiresIn,
-          });
-          return res.status(200).json({ token });
-        }
-      }
-    } catch (error) {
-      console.log(error);
-    };
-
+    const token = jwt.sign({ id: userFound._id, role: userFound.role }, process.env.SECRET_API, { expiresIn });
+    return res.status(200).json({ token, expiresIn });
   } catch (error) {
     console.log(error);
+    return res.status(500).json({ message: "Error interno del servidor" });
   };
 };
 
@@ -216,11 +213,11 @@ const changePassword = async (req, res) => {
   return res.status(200).json({ message: "Contraseña actualizada con éxito" });
 };
 
-const getUserByEmail = async (req, res) => {
-  const { email } = req.params;
+const getUserByRUT = async (req, res) => {
+  const { rut } = req.params;
 
   try {
-    const user = await User.findOne({ email: email });
+    const user = await User.findOne({ rut: rut });
 
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
@@ -232,4 +229,4 @@ const getUserByEmail = async (req, res) => {
   }
 };
 
-module.exports = { register, login, requestPasswordReset, resetPassword, changePassword, getUserByEmail };
+module.exports = { register, login, requestPasswordReset, resetPassword, changePassword, getUserByRUT };

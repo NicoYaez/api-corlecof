@@ -1,5 +1,4 @@
 const User = require("../models/user");
-const { Role } = require("../models/role");
 
 const verifyController = async (req, res) => {
     const id = req.params.id;
