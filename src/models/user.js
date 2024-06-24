@@ -4,9 +4,14 @@ const bcrypt = require('bcryptjs');
 const { Schema, model } = mongoose;
 
 const userSchema = new Schema({
-    username: {
+    rut: {
         type: String,
-        unique: true
+        unique: true,
+        required: true
+    },
+    name: {
+        type: String,
+        required: true
     },
     email: {
         type: String,
@@ -17,15 +22,16 @@ const userSchema = new Schema({
         type: String,
         required: true
     },
-    roles: [{
-        ref: "Role",
-        type: Schema.Types.ObjectId
-    }],
+    role: {
+        type: String,
+        required: true,
+        enum: ['Profesional', 'Secretary', 'Admin']
+    },
     passwordResetToken: String,
     passwordResetExpires: Date
-}, {
+}, { discriminatorKey: 'role', collection: 'users' }, {
     timestamps: true,
-    versionKey: false
+    versionKey: false,
 });
 
 userSchema.methods.encryptPassword = async password => {
