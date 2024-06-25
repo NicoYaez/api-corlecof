@@ -119,6 +119,29 @@ const eliminarHoraMedica = async (req, res) => {
     }
 };
 
+const obtenerHorasMedicasProfesionales = async (req, res) => {
+    try {
+        const profesionalId = req.params.id;
+        let citas;
+
+        if (profesionalId) {
+            // Filtrar citas por profesional._id y populate para obtener datos del profesional y paciente
+            citas = await HoraMedica.find({ profesional: profesionalId })
+                .populate('profesional')
+                .populate('paciente');
+        } else {
+            // Obtener todas las citas y populate para obtener datos del profesional y paciente
+            citas = await HoraMedica.find()
+                .populate('profesional')
+                .populate('paciente');
+        }
+
+        res.status(200).json({ citas });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 const obtenerHorasMedicasFiltradas = async (req, res) => {
     try {
         const { profesionalId, fecha } = req.query;
@@ -150,4 +173,5 @@ module.exports = {
     actualizarHoraMedica,
     obtenerHorasMedicasFiltradas,
     eliminarHoraMedica,
+    obtenerHorasMedicasProfesionales
 };
