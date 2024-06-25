@@ -27,8 +27,16 @@ npm run dev
 yarn dev
 ```
 
-## WEB QUE LA UTILIZA
+## Web
 
-`https://github.com/NicoYaez/web-corlecof`
+Para el frontend, utiliza la WEB disponible en:
+
+[https://github.com/NicoYaez/web-corlecof](https://github.com/NicoYaez/web-corlecof)
+
+## EQUIPO DE DESARROLLO
+
+- https://github.com/NicoYaez
+- https://github.com/acorreap
+- https://github.com/Avidalfort
 
 Este README proporciona una guía básica para comenzar con el proyecto, incluyendo cómo clonar el repositorio, instalar las dependencias necesarias.
