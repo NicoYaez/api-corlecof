@@ -20,7 +20,3 @@ const FichaPacienteSchema = new Schema({
 const FichaPaciente = mongoose.model('FichaPaciente', FichaPacienteSchema);
 
 module.exports = FichaPaciente;
-
-/*    fichasMedicas: [
-        { type: Schema.Types.ObjectId, ref: 'FichaMedica', required: true }
-    ], // Referencia a un array de FichaMedica*/

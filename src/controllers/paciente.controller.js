@@ -8,10 +8,10 @@ const createPaciente = async (req, res) => {
         const { rut, nombre, apellidoPaterno, apellidoMaterno, email, fichaMedica } = req.body;
 
         // Verificar si el RUT ya existe en la base de datos
-        //const existingPaciente = await Paciente.findOne({ rut });
-        //if (existingPaciente) {
-        //    return res.status(400).json({ message: 'Ya existe un paciente con este RUT' });
-        //}
+        const existingPaciente = await Paciente.findOne({ rut });
+        if (existingPaciente) {
+            return res.status(400).json({ message: 'Ya existe un paciente con este RUT' });
+        }
 
         // Crear un nuevo paciente con los datos recibidos
         const newPaciente = new Paciente({
