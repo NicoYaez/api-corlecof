@@ -12,9 +12,9 @@ router.get('/list', pacienteController.getAllPacientes);
 router.get('/:id', pacienteController.getPacienteById);
 
 // Ruta para actualizar un paciente por su ID
-router.put('/:id', pacienteController.updatePaciente);
+router.put('/', pacienteController.updatePaciente);
 
 // Ruta para eliminar un paciente por su ID
-router.delete('/:id', pacienteController.deletePaciente);
+router.delete('/delete/:id', pacienteController.deletePaciente);
 
 module.exports = router;

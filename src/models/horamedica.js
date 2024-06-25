@@ -1,13 +1,22 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
+const Paciente = require('../models/paciente');
+
 // Definición del esquema para citas médicas
 const HoraMedicaSchema = new Schema({
-    profesional: { type: String, required: true },
-    paciente: { type: String, required: true },
-    status: { type: String, enum: ['Scheduled', 'Completed', 'Cancelled'], default: 'Scheduled' },
+    profesional: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    paciente: { 
+        type: Schema.Types.ObjectId, 
+        ref: 'Paciente', required: true 
+    },
+    status: { type: String, enum: ['Programada', 'Completada', 'Cancellada'], default: 'Programada' },
     asistancia: { type: Boolean, default: false },
-    fechaHora: { type: Date, required: true },
+    fecha: { type: Date, required: true },
     hora: { type: String, required: true }
 });
 

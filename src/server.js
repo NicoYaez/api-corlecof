@@ -15,6 +15,7 @@ const tallerRoutes = require('../src/routes/taller.routes.js');
 const userRoutes = require('../src/routes/user.routes.js');
 const horaRoutes = require('../src/routes/hora.routes.js');
 const pacienteRoutes = require('../src/routes/paciente.routes.js');
+const fichaPacienteRoutes = require('../src/routes/fichapaciente.routes.js');
 
 const app = express();
 app.set('PORT', process.env.PORT);
@@ -33,6 +34,7 @@ app.use("/taller", tallerRoutes);
 app.use("/user", userRoutes);
 app.use("/hora", horaRoutes);
 app.use("/paciente", pacienteRoutes);
+app.use("/ficha/paciente", fichaPacienteRoutes);
 
 //app.get('*', function(req, res){ res.status(404).json({message: '404'}) });
 

@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const Profesional = require("../models/profesional");
 
 const getUsers = async (req, res) => {
     try {
@@ -30,4 +31,30 @@ const getProfessionals = async (req, res) => {
     }
 };
 
-module.exports = { getProfessionals, getUsers };
+const especialidadesValidas = ['Medico', 'Kinesiologo', 'Nutricionista', 'Profesor', 'Psicologo'];
+
+const getProfesionalesEspecialidad = async (req, res) => {
+    try {
+        // Obtener la especialidad desde los parámetros de la URL
+        const especialidad = req.params.especialidad;
+
+        // Validar que la especialidad proporcionada esté en la lista de especialidades válidas
+        if (!especialidadesValidas.includes(especialidad)) {
+            return res.status(400).json({ message: "Especialidad no válida" });
+        }
+
+        // Ejecutar la consulta para encontrar profesionales con la especialidad proporcionada
+        const professionals = await Profesional.find({ role: 'Profesional', speciality: especialidad });
+
+        // Devolver los profesionales encontrados
+        res.status(200).json(professionals);
+    } catch (error) {
+        console.error('Error al obtener profesionales:', error);
+        res.status(500).json({ message: "Error interno del servidor" });
+    }
+};
+
+module.exports = getProfessionals;
+
+
+module.exports = { getProfessionals, getUsers, getProfesionalesEspecialidad };
