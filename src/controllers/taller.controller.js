@@ -265,7 +265,6 @@ const removePaciente = async (req, res) => {
     }
 };
 
-
 // Función para eliminar un taller por su ID
 const deleteTaller = async (req, res) => {
     try {

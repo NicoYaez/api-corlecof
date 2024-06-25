@@ -6,15 +6,11 @@ const pacienteSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
-  name: {
+  nombre: {
     type: String,
     required: true
   },
-  lastName: {
-    type: String,
-    required: true
-  },
-  apellido: {
+  apellidoPaterno: {
     type: String,
     required: true
   },
@@ -25,7 +21,7 @@ const pacienteSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true
+    unique: false
   },
   fichaMedica: {
     type: Boolean,

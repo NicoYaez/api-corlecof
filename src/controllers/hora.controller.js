@@ -1,25 +1,38 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const HoraMedica = require('../models/horamedica');
+const User = require('../models/user'); // Importa el modelo de User
+const Paciente = require('../models/paciente'); // Importa el modelo de User
 
-// Controlador para agregar una nueva cita médica
 const agregarHoraMedica = async (req, res) => {
     try {
-        const { profesional, pacient, status, assistance, appointmentDate, appointmentTime } = req.body;
+        const { profesionalId, pacienteId, status, asistencia, fecha, hora } = req.body;
 
         // Validar campos requeridos
-        if (!profesional || !pacient || !appointmentDate || !appointmentTime) {
+        if (!profesionalId || !pacienteId || !fecha || !hora) {
             return res.status(400).json({ message: "Todos los campos requeridos deben ser proporcionados" });
+        }
+
+        // Verificar si el profesional existe y es de rol 'Profesional'
+        const profesional = await User.findOne({ _id: profesionalId, role: 'Profesional' });
+        if (!profesional) {
+            return res.status(400).json({ message: "El ID de profesional proporcionado no corresponde a un profesional" });
+        }
+
+        // Verificar si el paciente existe y es de rol 'Paciente'
+        const paciente = await Paciente.findOne({ _id: pacienteId, role: 'Paciente' });
+        if (!paciente) {
+            return res.status(400).json({ message: "El ID de paciente proporcionado no corresponde a un paciente" });
         }
 
         // Crear una nueva instancia de la cita médica
         const newAppointment = new HoraMedica({
-            profesional,
-            pacient,
-            status: status || 'Scheduled', // Valor por defecto 'Scheduled' si no se proporciona
-            assistance: assistance || false, // Valor por defecto 'false' si no se proporciona
-            appointmentDate,
-            appointmentTime
+            profesional: profesionalId,
+            paciente: pacienteId,
+            status: status || 'Programada', // Valor por defecto 'Programada' si no se proporciona
+            asistancia: asistencia || false, // Valor por defecto 'false' si no se proporciona
+            fecha,
+            hora
         });
 
         // Guardar la nueva cita médica en la base de datos
@@ -27,6 +40,7 @@ const agregarHoraMedica = async (req, res) => {
 
         res.status(201).json(savedAppointment);
     } catch (error) {
+        console.log(error);
         res.status(500).json({ error: error.message });
     }
 };
@@ -105,10 +119,35 @@ const eliminarHoraMedica = async (req, res) => {
     }
 };
 
+const obtenerHorasMedicasFiltradas = async (req, res) => {
+    try {
+        const { profesionalId, fecha } = req.query;
+        let citas;
+
+        if (profesionalId && fecha) {
+            // Filtrar citas por profesionalId y fecha
+            citas = await HoraMedica.find({ profesionalId, fecha });
+        } else if (profesionalId) {
+            // Filtrar solo por profesionalId
+            citas = await HoraMedica.find({ profesionalId });
+        } else {
+            // Obtener todas las citas si no se proporciona profesionalId
+            citas = await HoraMedica.find();
+        }
+
+        res.status(200).json({ horasOcupadas: citas.map(cita => cita.hora) });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
+
 module.exports = {
     agregarHoraMedica,
     obtenerHorasMedicas,
     obtenerHoraMedicaPorId,
     actualizarHoraMedica,
-    eliminarHoraMedica
+    obtenerHorasMedicasFiltradas,
+    eliminarHoraMedica,
 };

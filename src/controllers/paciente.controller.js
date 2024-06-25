@@ -1,12 +1,34 @@
+const mongoose = require('mongoose');
 const Paciente = require('../models/paciente');
+const FichaPaciente = require('../models/fichapaciente');
+const MedicalAppointment = require('../models/horamedica');
 
-// Crear un nuevo paciente
 const createPaciente = async (req, res) => {
     try {
-        const newPaciente = new Paciente(req.body);
+        const { rut, nombre, apellidoPaterno, apellidoMaterno, email, fichaMedica } = req.body;
+
+        // Verificar si el RUT ya existe en la base de datos
+        //const existingPaciente = await Paciente.findOne({ rut });
+        //if (existingPaciente) {
+        //    return res.status(400).json({ message: 'Ya existe un paciente con este RUT' });
+        //}
+
+        // Crear un nuevo paciente con los datos recibidos
+        const newPaciente = new Paciente({
+            rut,
+            nombre,
+            apellidoPaterno,
+            apellidoMaterno,
+            email,
+            fichaMedica
+        });
+
+        // Guardar el nuevo paciente en la base de datos
         const savedPaciente = await newPaciente.save();
-        res.status(201).json(savedPaciente);
+
+        res.status(200).json(savedPaciente);
     } catch (error) {
+        console.error('Error al crear paciente:', error.message);
         res.status(400).json({ message: error.message });
     }
 };
@@ -35,32 +57,79 @@ const getPacienteById = async (req, res) => {
     }
 };
 
-// Actualizar un paciente por su ID
 const updatePaciente = async (req, res) => {
     try {
-        const updatedPaciente = await Paciente.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (updatedPaciente) {
-            res.status(200).json(updatedPaciente);
-        } else {
-            res.status(404).json({ message: 'Paciente no encontrado' });
+        // Obtener el ID del paciente desde los parámetros de consulta (?id=...)
+        const id = req.query.id;
+
+        // Verificar si se proporcionó un ID válido
+        if (!id) {
+            return res.status(400).json({ message: 'Se requiere proporcionar un ID válido en los parámetros de consulta' });
         }
+
+        // Crear el objeto de actualización basado en los parámetros de consulta
+        const updateParams = { ...req.query };
+
+        // Eliminar el ID de los parámetros de actualización para evitar actualizar el ID
+        delete updateParams.id;
+
+        // Realizar la actualización en la base de datos
+        const updatedPaciente = await Paciente.findByIdAndUpdate(id, updateParams, { new: true });
+
+        // Verificar si se encontró y actualizó al paciente
+        if (!updatedPaciente) {
+            return res.status(404).json({ message: 'Paciente no encontrado' });
+        }
+
+        // Devolver al paciente actualizado
+        res.json(updatedPaciente);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        // Manejar errores de manera adecuada
+        console.error(error);
+        res.status(500).json({ message: error.message });
     }
 };
 
-// Eliminar un paciente por su ID
-const deletePaciente = async (req, res) => {
-    try {
-        const deletedPaciente = await Paciente.findByIdAndDelete(req.params.id);
-        if (deletedPaciente) {
-            res.status(200).json({ message: 'Paciente eliminado' });
-        } else {
-            res.status(404).json({ message: 'Paciente no encontrado' });
+
+const deletePaciente = (req, res) => {
+    // Buscar y eliminar al paciente
+    Paciente.findByIdAndDelete(req.params.id, (err, deletedPaciente) => {
+        if (err) {
+            return res.status(500).json({ message: err.message });
         }
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+
+        if (!deletedPaciente) {
+            return res.status(404).json({ message: 'Paciente no encontrado' });
+        }
+
+        // Buscar y eliminar la ficha del paciente
+        FichaPaciente.deleteMany({ paciente: req.params.id }, (err, deletedFicha) => {
+            if (err) {
+                return res.status(500).json({ message: err.message });
+            }
+
+            // Buscar y eliminar las citas médicas del paciente
+            MedicalAppointment.deleteMany({ paciente: req.params.id }, (err, deletedAppointments) => {
+                if (err) {
+                    return res.status(500).json({ message: err.message });
+                }
+
+                let responseMessage = 'Paciente eliminado';
+                if (deletedFicha) {
+                    responseMessage += ', ficha eliminada';
+                } else {
+                    responseMessage += ', ficha no encontrada';
+                }
+                if (deletedAppointments.deletedCount > 0) {
+                    responseMessage += `, ${deletedAppointments.deletedCount} citas médicas eliminadas`;
+                } else {
+                    responseMessage += ', no se encontraron citas médicas';
+                }
+
+                res.status(200).json({ message: responseMessage });
+            });
+        });
+    });
 };
 
 module.exports = {

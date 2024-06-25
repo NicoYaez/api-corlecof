@@ -5,7 +5,8 @@ const {
     obtenerHorasMedicas,
     obtenerHoraMedicaPorId,
     actualizarHoraMedica,
-    eliminarHoraMedica
+    eliminarHoraMedica,
+    obtenerHorasMedicasFiltradas,
 } = require('../controllers/hora.controller');
 
 router.post('/add', agregarHoraMedica);
@@ -16,6 +17,9 @@ router.get('/:id', obtenerHoraMedicaPorId);
 
 router.put('/update/:id', actualizarHoraMedica);
 
+router.get('/ocupadas/:id/:fecha', obtenerHorasMedicasFiltradas);
+
 router.delete('/delete/:id', eliminarHoraMedica);
+
 
 module.exports = router;
